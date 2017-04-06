@@ -883,7 +883,10 @@ int libluksde_io_handle_read_volume_header(
 	if( ( separator_index > 0 )
 	 && ( separator_index < 31 ) )
 	{
-		if( ( ( (luksde_volume_header_t *) volume_header_data )->encryption_mode[ separator_index + 1 ] == 'b' )
+		if (io_handle->encryption_chaining_mode == LIBLUKSDE_ENCRYPTION_CHAINING_MODE_ECB) {
+			io_handle->initialization_vector_mode = LIBLUKSDE_INITIALIZATION_VECTOR_MODE_NONE;
+		}
+		else if( ( ( (luksde_volume_header_t *) volume_header_data )->encryption_mode[ separator_index + 1 ] == 'b' )
 		 || ( ( (luksde_volume_header_t *) volume_header_data )->encryption_mode[ separator_index + 1 ] == 'B' ) )
 		{
 			if( ( ( ( (luksde_volume_header_t *) volume_header_data )->encryption_mode[ separator_index + 2 ] == 'e' )

@@ -642,6 +642,9 @@ int libluksde_encryption_crypt(
 
 			break;
 
+		case LIBLUKSDE_INITIALIZATION_VECTOR_MODE_NONE:
+			break;
+
 		default:
 			libcerror_error_set(
 			 error,
