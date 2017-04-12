@@ -709,6 +709,25 @@ int libluksde_encryption_crypt(
 						}
 						break;
 
+					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+						// Convert context to tweaked context
+						libcaes_context_convert_xts(
+							&tweaked_context,
+							context->decryption_context,
+							LIBCAES_CRYPT_MODE_ENCRYPT,
+							error );
+
+						result = libcaes_crypt_xts(
+							tweaked_context,
+							LIBCAES_CRYPT_MODE_ENCRYPT,
+							initialization_vector,
+							16,
+							input_data,
+							input_data_size,
+							output_data,
+							output_data_size,
+							error );
+						break;
 					default:
 						result = 0;
 						break;
@@ -771,6 +790,26 @@ int libluksde_encryption_crypt(
 							}
 							data_offset += 16;
 						}
+						break;
+
+					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+						// Convert context to tweaked context
+						libcaes_context_convert_xts(
+							&tweaked_context,
+							context->decryption_context,
+							LIBCAES_CRYPT_MODE_DECRYPT,
+							error );
+
+						result = libcaes_crypt_xts(
+							tweaked_context,
+							LIBCAES_CRYPT_MODE_DECRYPT,
+							initialization_vector,
+							16,
+							input_data,
+							input_data_size,
+							output_data,
+							output_data_size,
+							error );
 						break;
 
 					default:
