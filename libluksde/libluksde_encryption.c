@@ -36,12 +36,12 @@
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_initialize(
-     libluksde_encryption_context_t **context,
-     int method,
-     int chaining_mode,
-     int initialization_vector_mode,
-     int essiv_hashing_method,
-     libcerror_error_t **error )
+		 libluksde_encryption_context_t **context,
+		 int method,
+		 int chaining_mode,
+		 int initialization_vector_mode,
+		 int essiv_hashing_method,
+		 libcerror_error_t **error )
 {
 	static char *function = "libluksde_encryption_initialize";
 	int result            = 0;
@@ -80,7 +80,7 @@ int libluksde_encryption_initialize(
 		return( -1 );
 	}
 	*context = memory_allocate_structure(
-	            libluksde_encryption_context_t );
+							libluksde_encryption_context_t );
 
 	if( *context == NULL )
 	{
@@ -94,9 +94,9 @@ int libluksde_encryption_initialize(
 		goto on_error;
 	}
 	if( memory_set(
-	     *context,
-	     0,
-	     sizeof( libluksde_encryption_context_t ) ) == NULL )
+			 *context,
+			 0,
+			 sizeof( libluksde_encryption_context_t ) ) == NULL )
 	{
 		libcerror_error_set(
 		 error,
@@ -115,9 +115,19 @@ int libluksde_encryption_initialize(
 	switch( method )
 	{
 		case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-			result = libcaes_context_initialize(
-			          &( ( *context )->decryption_context ),
-			          error );
+			switch ( chaining_mode )
+			{
+				case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+					result = libcaes_tweaked_context_initialize(
+										&( ( *context )->decryption_context.aes_tweaked_context ),
+										error );
+					break;
+				default:
+					result = libcaes_context_initialize(
+										&( ( *context )->decryption_context.aes_context ),
+										error );
+				break;
+			}
 			break;
 
 		default:
@@ -138,9 +148,19 @@ int libluksde_encryption_initialize(
 	switch( method )
 	{
 		case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-			result = libcaes_context_initialize(
-			          &( ( *context )->encryption_context ),
-			          error );
+			switch ( chaining_mode )
+			{
+				case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+					result = libcaes_tweaked_context_initialize(
+										&( ( *context )->encryption_context.aes_tweaked_context ),
+										error );
+					break;
+				default:
+					result = libcaes_context_initialize(
+										&( ( *context )->encryption_context.aes_context ),
+										error );
+				break;
+			}
 			break;
 
 		default:
@@ -164,8 +184,8 @@ int libluksde_encryption_initialize(
 		{
 			case LIBLUKSDE_ENCRYPTION_METHOD_AES:
 				result = libcaes_context_initialize(
-					  &( ( *context )->essiv_encryption_context ),
-					  error );
+						&( ( *context )->essiv_encryption_context ),
+						error );
 				break;
 
 			default:
@@ -197,17 +217,36 @@ on_error:
 		switch( method )
 		{
 			case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-				if( ( *context )->encryption_context != NULL )
+				switch ( chaining_mode )
 				{
-					libcaes_context_free(
-					 &( ( *context )->encryption_context ),
-					 NULL );
-				}
-				if( ( *context )->decryption_context != NULL )
-				{
-					libcaes_context_free(
-					 &( ( *context )->decryption_context ),
-					 NULL );
+					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+						if( ( *context )->encryption_context.aes_tweaked_context != NULL )
+						{
+							libcaes_tweaked_context_free(
+							 &( ( *context )->encryption_context.aes_tweaked_context ),
+							 NULL );
+						}
+						if( ( *context )->decryption_context.aes_tweaked_context != NULL )
+						{
+							libcaes_tweaked_context_free(
+							 &( ( *context )->decryption_context.aes_tweaked_context ),
+							 NULL );
+						}
+						break;
+					default:
+						if( ( *context )->encryption_context.aes_context != NULL )
+						{
+							libcaes_context_free(
+							 &( ( *context )->encryption_context.aes_context ),
+							 NULL );
+						}
+						if( ( *context )->decryption_context.aes_context != NULL )
+						{
+							libcaes_context_free(
+							 &( ( *context )->decryption_context.aes_context ),
+							 NULL );
+						}
+						break;
 				}
 				break;
 
@@ -226,8 +265,8 @@ on_error:
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_free(
-     libluksde_encryption_context_t **context,
-     libcerror_error_t **error )
+		 libluksde_encryption_context_t **context,
+		 libcerror_error_t **error )
 {
 	static char *function = "libluksde_encryption_free";
 	int result            = 1;
@@ -248,37 +287,11 @@ int libluksde_encryption_free(
 		switch( ( *context )->method )
 		{
 			case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-				if( libcaes_context_free(
-				     &( ( *context )->decryption_context ),
-				     error ) != 1 )
-				{
-					libcerror_error_set(
-					 error,
-					 LIBCERROR_ERROR_DOMAIN_RUNTIME,
-					 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
-					 "%s: unable free decryption context.",
-					 function );
-
-					result = -1;
-				}
-				if( libcaes_context_free(
-				     &( ( *context )->encryption_context ),
-				     error ) != 1 )
-				{
-					libcerror_error_set(
-					 error,
-					 LIBCERROR_ERROR_DOMAIN_RUNTIME,
-					 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
-					 "%s: unable free encryption context.",
-					 function );
-
-					result = -1;
-				}
 				if( ( *context )->essiv_encryption_context != NULL )
 				{
 					if( libcaes_context_free(
-					     &( ( *context )->essiv_encryption_context ),
-					     error ) != 1 )
+							 &( ( *context )->essiv_encryption_context ),
+							 error ) != 1 )
 					{
 						libcerror_error_set(
 						 error,
@@ -289,6 +302,66 @@ int libluksde_encryption_free(
 
 						result = -1;
 					}
+				}
+				switch ( ( *context )->chaining_mode )
+				{
+					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+						if( libcaes_tweaked_context_free(
+								 &( ( *context )->decryption_context.aes_tweaked_context ),
+								 error ) != 1 )
+						{
+							libcerror_error_set(
+							 error,
+							 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+							 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+							 "%s: unable free decryption context.",
+							 function );
+
+							result = -1;
+						}
+						if( libcaes_tweaked_context_free(
+								 &( ( *context )->encryption_context.aes_tweaked_context ),
+								 error ) != 1 )
+						{
+							libcerror_error_set(
+							 error,
+							 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+							 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+							 "%s: unable free encryption context.",
+							 function );
+
+							result = -1;
+						}
+					break;
+
+					default:
+						if( libcaes_context_free(
+								 &( ( *context )->decryption_context.aes_context ),
+								 error ) != 1 )
+						{
+							libcerror_error_set(
+							 error,
+							 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+							 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+							 "%s: unable free decryption context.",
+							 function );
+
+							result = -1;
+						}
+						if( libcaes_context_free(
+								 &( ( *context )->encryption_context.aes_context ),
+								 error ) != 1 )
+						{
+							libcerror_error_set(
+							 error,
+							 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+							 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+							 "%s: unable free encryption context.",
+							 function );
+
+							result = -1;
+						}
+					break;
 				}
 				break;
 
@@ -307,10 +380,10 @@ int libluksde_encryption_free(
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_set_keys(
-     libluksde_encryption_context_t *context,
-     const uint8_t *key,
-     size_t key_size,
-     libcerror_error_t **error )
+		 libluksde_encryption_context_t *context,
+		 const uint8_t *key,
+		 size_t key_size,
+		 libcerror_error_t **error )
 {
 	uint8_t essiv_key[ 32 ];
 
@@ -356,12 +429,28 @@ int libluksde_encryption_set_keys(
 	switch( context->method )
 	{
 		case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-			result = libcaes_context_set_key(
-			          context->decryption_context,
-			          LIBCAES_CRYPT_MODE_DECRYPT,
-			          key,
-			          key_bit_size,
-			          error );
+			switch( context->chaining_mode )
+			{
+				case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+					result = libcaes_tweaked_context_set_keys(
+										context->decryption_context.aes_tweaked_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size / 2,
+										key + key_bit_size / 2,
+										key_bit_size / 2,
+										error );
+				break;
+
+				default:
+					result = libcaes_context_set_key(
+										context->decryption_context.aes_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size,
+										error );
+				break;
+			}
 			break;
 
 		default:
@@ -378,15 +467,32 @@ int libluksde_encryption_set_keys(
 
 		goto on_error;
 	}
+
 	switch( context->method )
 	{
 		case LIBLUKSDE_ENCRYPTION_METHOD_AES:
-			result = libcaes_context_set_key(
-			          context->encryption_context,
-			          LIBCAES_CRYPT_MODE_ENCRYPT,
-			          key,
-			          key_bit_size,
-			          error );
+			switch( context->chaining_mode )
+			{
+				case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+					result = libcaes_tweaked_context_set_keys(
+										context->encryption_context.aes_tweaked_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size / 2,
+										key + key_bit_size / 2,
+										key_bit_size / 2,
+										error );
+				break;
+
+				default:
+					result = libcaes_context_set_key(
+										context->encryption_context.aes_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size,
+										error );
+				break;
+			}
 			break;
 
 		default:
@@ -406,9 +512,9 @@ int libluksde_encryption_set_keys(
 	if( context->initialization_vector_mode == LIBLUKSDE_INITIALIZATION_VECTOR_MODE_ESSIV )
 	{
 		if( memory_set(
-		     essiv_key,
-		     0,
-		     32 ) == NULL )
+				 essiv_key,
+				 0,
+				 32 ) == NULL )
 		{
 			libcerror_error_set(
 			 error,
@@ -422,21 +528,21 @@ int libluksde_encryption_set_keys(
 		switch( context->essiv_hashing_method )
 		{
 			case LIBLUKSDE_HASHING_METHOD_SHA1:
-	                	result = libhmac_sha1_calculate(
-				          key,
-				          key_size,
-				          essiv_key,
-				          32,
-				          error );
+										result = libhmac_sha1_calculate(
+									key,
+									key_size,
+									essiv_key,
+									32,
+									error );
 				break;
 
 			case LIBLUKSDE_HASHING_METHOD_SHA256:
-	                	result = libhmac_sha256_calculate(
-				          key,
-				          key_size,
-				          essiv_key,
-				          32,
-				          error );
+										result = libhmac_sha256_calculate(
+									key,
+									key_size,
+									essiv_key,
+									32,
+									error );
 				break;
 
 			default:
@@ -457,11 +563,11 @@ int libluksde_encryption_set_keys(
 		{
 			case LIBLUKSDE_ENCRYPTION_METHOD_AES:
 				result = libcaes_context_set_key(
-					  context->essiv_encryption_context,
-					  LIBCAES_CRYPT_MODE_ENCRYPT,
-					  essiv_key,
-					  key_bit_size,
-					  error );
+						context->essiv_encryption_context,
+						LIBCAES_CRYPT_MODE_ENCRYPT,
+						essiv_key,
+						key_bit_size,
+						error );
 				break;
 
 			default:
@@ -479,9 +585,9 @@ int libluksde_encryption_set_keys(
 			goto on_error;
 		}
 		if( memory_set(
-		     essiv_key,
-		     0,
-		     32 ) == NULL )
+				 essiv_key,
+				 0,
+				 32 ) == NULL )
 		{
 			libcerror_error_set(
 			 error,
@@ -510,14 +616,14 @@ on_error:
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_crypt(
-     libluksde_encryption_context_t *context,
-     int mode,
-     const uint8_t *input_data,
-     size_t input_data_size,
-     uint8_t *output_data,
-     size_t output_data_size,
-     uint64_t block_key,
-     libcerror_error_t **error )
+		 libluksde_encryption_context_t *context,
+		 int mode,
+		 const uint8_t *input_data,
+		 size_t input_data_size,
+		 uint8_t *output_data,
+		 size_t output_data_size,
+		 uint64_t block_key,
+		 libcerror_error_t **error )
 {
 	uint8_t block_key_data[ 16 ];
 	uint8_t initialization_vector[ 16 ];
@@ -561,9 +667,9 @@ int libluksde_encryption_crypt(
 		return( -1 );
 	}
 	if( memory_set(
-	     initialization_vector,
-	     0,
-	     16 ) == NULL )
+			 initialization_vector,
+			 0,
+			 16 ) == NULL )
 	{
 		libcerror_error_set(
 		 error,
@@ -585,9 +691,9 @@ int libluksde_encryption_crypt(
 
 		case LIBLUKSDE_INITIALIZATION_VECTOR_MODE_ESSIV:
 			if( memory_set(
-			     block_key_data,
-			     0,
-			     16 ) == NULL )
+					 block_key_data,
+					 0,
+					 16 ) == NULL )
 			{
 				libcerror_error_set(
 				 error,
@@ -606,13 +712,13 @@ int libluksde_encryption_crypt(
 			 * with the hash of the key
 			 */
 			if( libcaes_crypt_ecb(
-			     context->essiv_encryption_context,
-			     LIBCAES_CRYPT_MODE_ENCRYPT,
-			     block_key_data,
-			     16,
-			     initialization_vector,
-			     16,
-			     error ) != 1 )
+					 context->essiv_encryption_context,
+					 LIBCAES_CRYPT_MODE_ENCRYPT,
+					 block_key_data,
+					 16,
+					 initialization_vector,
+					 16,
+					 error ) != 1 )
 			{
 				libcerror_error_set(
 				 error,
@@ -676,15 +782,15 @@ int libluksde_encryption_crypt(
 				{
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_CBC:
 						result = libcaes_crypt_cbc(
-							  context->encryption_context,
-							  LIBCAES_CRYPT_MODE_ENCRYPT,
-							  initialization_vector,
-							  16,
-							  input_data,
-							  input_data_size,
-							  output_data,
-							  output_data_size,
-							  error );
+								context->encryption_context.aes_context,
+								LIBCAES_CRYPT_MODE_ENCRYPT,
+								initialization_vector,
+								16,
+								input_data,
+								input_data_size,
+								output_data,
+								output_data_size,
+								error );
 						break;
 
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_ECB:
@@ -693,13 +799,13 @@ int libluksde_encryption_crypt(
 							/* The libcaes_crypt_ecb function encrypts 16 bytes at a time
 							 */
 							result = libcaes_crypt_ecb(
-								  context->encryption_context,
-								  LIBCAES_CRYPT_MODE_ENCRYPT,
-								  &( input_data[ data_offset ] ),
-								  input_data_size - data_offset,
-								  &( output_data[ data_offset ] ),
-								  output_data_size - data_offset,
-								  error );
+									context->encryption_context.aes_context,
+									LIBCAES_CRYPT_MODE_ENCRYPT,
+									&( input_data[ data_offset ] ),
+									input_data_size - data_offset,
+									&( output_data[ data_offset ] ),
+									output_data_size - data_offset,
+									error );
 
 							if( result != 1 )
 							{
@@ -710,15 +816,8 @@ int libluksde_encryption_crypt(
 						break;
 
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
-						// Convert context to tweaked context
-						libcaes_context_convert_xts(
-							&tweaked_context,
-							context->decryption_context,
-							LIBCAES_CRYPT_MODE_ENCRYPT,
-							error );
-
 						result = libcaes_crypt_xts(
-							tweaked_context,
+							context->encryption_context.aes_tweaked_context,
 							LIBCAES_CRYPT_MODE_ENCRYPT,
 							initialization_vector,
 							16,
@@ -759,15 +858,15 @@ int libluksde_encryption_crypt(
 				{
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_CBC:
 						result = libcaes_crypt_cbc(
-							  context->decryption_context,
-							  LIBCAES_CRYPT_MODE_DECRYPT,
-							  initialization_vector,
-							  16,
-							  input_data,
-							  input_data_size,
-							  output_data,
-							  output_data_size,
-							  error );
+								context->decryption_context.aes_context,
+								LIBCAES_CRYPT_MODE_DECRYPT,
+								initialization_vector,
+								16,
+								input_data,
+								input_data_size,
+								output_data,
+								output_data_size,
+								error );
 						break;
 
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_ECB:
@@ -776,13 +875,13 @@ int libluksde_encryption_crypt(
 							/* The libcaes_crypt_ecb function decrypts 16 bytes at a time
 							 */
 							result = libcaes_crypt_ecb(
-								  context->encryption_context,
-								  LIBCAES_CRYPT_MODE_DECRYPT,
-								  &( input_data[ data_offset ] ),
-								  input_data_size - data_offset,
-								  &( output_data[ data_offset ] ),
-								  output_data_size - data_offset,
-								  error );
+									context->encryption_context.aes_context,
+									LIBCAES_CRYPT_MODE_DECRYPT,
+									&( input_data[ data_offset ] ),
+									input_data_size - data_offset,
+									&( output_data[ data_offset ] ),
+									output_data_size - data_offset,
+									error );
 
 							if( result != 1 )
 							{
@@ -792,16 +891,10 @@ int libluksde_encryption_crypt(
 						}
 						break;
 
+						int i;
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
-						// Convert context to tweaked context
-						libcaes_context_convert_xts(
-							&tweaked_context,
-							context->decryption_context,
-							LIBCAES_CRYPT_MODE_DECRYPT,
-							error );
-
 						result = libcaes_crypt_xts(
-							tweaked_context,
+							context->decryption_context.aes_tweaked_context,
 							LIBCAES_CRYPT_MODE_DECRYPT,
 							initialization_vector,
 							16,
