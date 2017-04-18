@@ -36,12 +36,12 @@
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_initialize(
-		 libluksde_encryption_context_t **context,
-		 int method,
-		 int chaining_mode,
-		 int initialization_vector_mode,
-		 int essiv_hashing_method,
-		 libcerror_error_t **error )
+    libluksde_encryption_context_t **context,
+    int method,
+    int chaining_mode,
+    int initialization_vector_mode,
+    int essiv_hashing_method,
+    libcerror_error_t **error )
 {
 	static char *function = "libluksde_encryption_initialize";
 	int result            = 0;
@@ -265,8 +265,8 @@ on_error:
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_free(
-		 libluksde_encryption_context_t **context,
-		 libcerror_error_t **error )
+    libluksde_encryption_context_t **context,
+    libcerror_error_t **error )
 {
 	static char *function = "libluksde_encryption_free";
 	int result            = 1;
@@ -380,10 +380,10 @@ int libluksde_encryption_free(
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_set_keys(
-		 libluksde_encryption_context_t *context,
-		 const uint8_t *key,
-		 size_t key_size,
-		 libcerror_error_t **error )
+    libluksde_encryption_context_t *context,
+    const uint8_t *key,
+    size_t key_size,
+    libcerror_error_t **error )
 {
 	uint8_t essiv_key[ 32 ];
 
@@ -616,14 +616,14 @@ on_error:
  * Returns 1 if successful or -1 on error
  */
 int libluksde_encryption_crypt(
-		 libluksde_encryption_context_t *context,
-		 int mode,
-		 const uint8_t *input_data,
-		 size_t input_data_size,
-		 uint8_t *output_data,
-		 size_t output_data_size,
-		 uint64_t block_key,
-		 libcerror_error_t **error )
+    libluksde_encryption_context_t *context,
+    int mode,
+    const uint8_t *input_data,
+    size_t input_data_size,
+    uint8_t *output_data,
+    size_t output_data_size,
+    uint64_t block_key,
+    libcerror_error_t **error )
 {
 	uint8_t block_key_data[ 16 ];
 	uint8_t initialization_vector[ 16 ];
