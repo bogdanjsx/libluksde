@@ -27,6 +27,7 @@
 
 #include "libluksde_libcaes.h"
 #include "libluksde_libcerror.h"
+#include "libluksde_serpent.h"
 
 #if defined( __cplusplus )
 extern "C" {
@@ -43,6 +44,7 @@ typedef union libluksde_generic_context libluksde_generic_context_t;
 union libluksde_generic_context {
   libcaes_context_t *aes_context;
   libcaes_tweaked_context_t *aes_tweaked_context;
+  libluksde_serpent_context_t *serpent_context;
 };
 
 typedef struct libluksde_encryption_context libluksde_encryption_context_t;

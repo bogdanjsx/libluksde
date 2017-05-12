@@ -68,7 +68,8 @@ int libluksde_encryption_initialize(
 
 		return( -1 );
 	}
-	if( method != LIBLUKSDE_ENCRYPTION_METHOD_AES )
+	if( ( method != LIBLUKSDE_ENCRYPTION_METHOD_AES )
+	 && ( method != LIBLUKSDE_ENCRYPTION_METHOD_SERPENT ) )
 	{
 		libcerror_error_set(
 		 error,
@@ -130,6 +131,12 @@ int libluksde_encryption_initialize(
 			}
 			break;
 
+		case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+			result = libluksde_serpent_context_initialize(
+								&( ( *context )->decryption_context.serpent_context ),
+								error );
+			break;
+
 		default:
 			result = 0;
 			break;
@@ -161,6 +168,12 @@ int libluksde_encryption_initialize(
 										error );
 				break;
 			}
+			break;
+
+		case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+			result = libluksde_serpent_context_initialize(
+								&( ( *context )->encryption_context.serpent_context ),
+								error );
 			break;
 
 		default:
@@ -249,6 +262,20 @@ on_error:
 						break;
 				}
 				break;
+
+			case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+				if( ( *context )->encryption_context.serpent_context != NULL )
+				{
+					libluksde_serpent_context_free(
+					 &( ( *context )->encryption_context.serpent_context ),
+					 NULL );
+				}
+				if( ( *context )->decryption_context.serpent_context != NULL )
+				{
+					libluksde_serpent_context_free(
+					 &( ( *context )->decryption_context.serpent_context ),
+					 NULL );
+				}
 
 			default:
 				break;
@@ -365,6 +392,32 @@ int libluksde_encryption_free(
 				}
 				break;
 
+			case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+				if( libluksde_serpent_context_free(
+						 &( ( *context )->decryption_context.serpent_context ),
+						 error ) != 1 )
+				{
+					libcerror_error_set(
+					 error,
+					 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+					 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+					 "%s: unable free decryption context.",
+					 function );
+
+					result = -1;
+				}
+				if( libluksde_serpent_context_free(
+						 &( ( *context )->encryption_context.serpent_context ),
+						 error ) != 1 )
+				{
+					libcerror_error_set(
+					 error,
+					 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+					 LIBCERROR_RUNTIME_ERROR_FINALIZE_FAILED,
+					 "%s: unable free encryption context.",
+					 function );
+				}
+
 			default:
 				break;
 		}
@@ -453,6 +506,14 @@ int libluksde_encryption_set_keys(
 			}
 			break;
 
+		case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+			result = libluksde_serpent_context_set_key(
+										context->decryption_context.serpent_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size,
+										error );
+
 		default:
 			break;
 	}
@@ -494,6 +555,14 @@ int libluksde_encryption_set_keys(
 				break;
 			}
 			break;
+
+		case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+			result = libluksde_serpent_context_set_key(
+										context->decryption_context.serpent_context,
+										LIBCAES_CRYPT_MODE_DECRYPT,
+										key,
+										key_bit_size,
+										error );
 
 		default:
 			break;
@@ -833,6 +902,26 @@ int libluksde_encryption_crypt(
 				}
 				break;
 
+			case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+				while( data_offset < input_data_size )
+				{
+					result = libluksde_serpent_crypt_ecb(
+							context->encryption_context.serpent_context,
+							LIBLUKSDE_SERPENT_CRYPT_MODE_DECRYPT,
+							&( input_data[ data_offset ] ),
+							input_data_size - data_offset,
+							&( output_data[ data_offset ] ),
+							output_data_size - data_offset,
+							error );
+
+					if( result != 1 )
+					{
+						break;
+					}
+					data_offset += 16;
+				}
+				break;
+
 			default:
 				result = 0;
 				break;
@@ -908,6 +997,26 @@ int libluksde_encryption_crypt(
 					default:
 						result = 0;
 						break;
+				}
+				break;
+
+			case LIBLUKSDE_ENCRYPTION_METHOD_SERPENT:
+				while( data_offset < input_data_size )
+				{
+					result = libluksde_serpent_crypt_ecb(
+							context->decryption_context.serpent_context,
+							LIBLUKSDE_SERPENT_CRYPT_MODE_DECRYPT,
+							&( input_data[ data_offset ] ),
+							input_data_size - data_offset,
+							&( output_data[ data_offset ] ),
+							output_data_size - data_offset,
+							error );
+
+					if( result != 1 )
+					{
+						break;
+					}
+					data_offset += 16;
 				}
 				break;
 
