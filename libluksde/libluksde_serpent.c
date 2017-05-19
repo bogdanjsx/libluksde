@@ -146,7 +146,7 @@
 
 /* Key expansion affine recurrence */
 #define krec( a, b, c, d, i, j ) \
-	({ b ^= d; b ^= c; b ^= a; b ^= PHI ^ (i); b = rol32( b, 11); k[ j ] = b; })
+	({ b ^= d; b ^= c; b ^= a; b ^= PHI ^ (i); b = rol32( b, 11 ); k[ j ] = b; })
 
 /* Creates a context
  * Make sure the value context is referencing, is set to NULL

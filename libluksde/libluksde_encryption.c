@@ -485,13 +485,16 @@ int libluksde_encryption_set_keys(
 			switch( context->chaining_mode )
 			{
 				case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
+					key_bit_size  /= 2;
+					key_size /= 2;
+
 					result = libcaes_tweaked_context_set_keys(
 										context->decryption_context.aes_tweaked_context,
 										LIBCAES_CRYPT_MODE_DECRYPT,
 										key,
-										key_bit_size / 2,
-										key + key_bit_size / 2,
-										key_bit_size / 2,
+										key_bit_size,
+										&( key[ key_size ] ),
+										key_bit_size,
 										error );
 				break;
 
@@ -539,10 +542,11 @@ int libluksde_encryption_set_keys(
 										context->encryption_context.aes_tweaked_context,
 										LIBCAES_CRYPT_MODE_DECRYPT,
 										key,
-										key_bit_size / 2,
-										key + key_bit_size / 2,
-										key_bit_size / 2,
+										key_bit_size,
+										&( key[ key_size ] ),
+										key_bit_size,
 										error );
+				break;
 				break;
 
 				default:
@@ -980,7 +984,6 @@ int libluksde_encryption_crypt(
 						}
 						break;
 
-						int i;
 					case LIBLUKSDE_ENCRYPTION_CHAINING_MODE_XTS:
 						result = libcaes_crypt_xts(
 							context->decryption_context.aes_tweaked_context,
