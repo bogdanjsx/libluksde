@@ -27,6 +27,7 @@
 
 #include "libluksde_libcaes.h"
 #include "libluksde_libcerror.h"
+#include "libluksde_serpent.h"
 
 #if defined( __cplusplus )
 extern "C" {
@@ -36,6 +37,14 @@ enum LIBLUKSDE_ENCRYPTION_CRYPT_MODES
 {
 	LIBLUKSDE_ENCRYPTION_CRYPT_MODE_DECRYPT   = 0,
 	LIBLUKSDE_ENCRYPTION_CRYPT_MODE_ENCRYPT   = 1
+};
+
+typedef union libluksde_generic_context libluksde_generic_context_t;
+
+union libluksde_generic_context {
+  libcaes_context_t *aes_context;
+  libcaes_tweaked_context_t *aes_tweaked_context;
+  libluksde_serpent_context_t *serpent_context;
 };
 
 typedef struct libluksde_encryption_context libluksde_encryption_context_t;
@@ -60,11 +69,11 @@ struct libluksde_encryption_context
 
 	/* The decryption context
 	 */
-	libcaes_context_t *decryption_context;
+	libluksde_generic_context_t decryption_context;
 
 	/* The encryption context
 	 */
-	libcaes_context_t *encryption_context;
+	libluksde_generic_context_t encryption_context;
 
 	/* The ESSIV encryption context
 	 */

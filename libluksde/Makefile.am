@@ -46,6 +46,7 @@ libluksde_la_SOURCES = \
 	libluksde_notify.c libluksde_notify.h \
 	libluksde_password.c libluksde_password.h \
 	libluksde_sector_data.c libluksde_sector_data.h \
+	libluksde_serpent.c libluksde_serpent.h \
 	libluksde_support.c libluksde_support.h \
 	libluksde_types.h \
 	libluksde_unused.h \
